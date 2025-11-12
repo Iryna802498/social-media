@@ -3,6 +3,7 @@ from .models import (
     Profile,
     Hashtag,
     Post,
+    Like,
 )
 
 
@@ -89,3 +90,20 @@ class PostListSerializer(serializers.ModelSerializer):
 
     def get_likes_count(self, obj):
         return obj.likes.count()
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="username"
+    )
+    post = serializers.StringRelatedField()
+
+    class Meta:
+        model = Like
+        fields = (
+            "id",
+            "user",
+            "post",
+            "created_at"
+        )
