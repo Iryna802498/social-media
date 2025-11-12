@@ -69,3 +69,23 @@ class Post(models.Model):
 
     class Meta:
         ordering = ["-publishing_at"]
+
+
+class Like(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="likes",
+        on_delete=models.CASCADE
+    )
+    post = models.ForeignKey(
+        Post,
+        related_name="likes",
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["user", "post"]
+
+    def __str__(self) -> str:
+        return f"Like by {self.user.email} to post {self.post.id}"
