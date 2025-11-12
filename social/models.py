@@ -29,3 +29,10 @@ class Profile(models.Model):
 
     def __str__(self) -> str:
         return self.user.email
+
+
+class Hashtag(models.Model):
+    text = models.CharField(max_length=150, unique=True)
+
+    def __str__(self) -> str:
+        return self.text
