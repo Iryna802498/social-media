@@ -89,3 +89,21 @@ class Like(models.Model):
 
     def __str__(self) -> str:
         return f"Like by {self.user.email} to post {self.post.id}"
+
+
+class Comment(models.Model):
+    post = models.ForeignKey(
+        Post,
+        related_name="comments",
+        on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="comments"
+    )
+    comment = models.CharField(max_length=300)
+    publishing_at = models.DateField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"Comment by {self.user.email} on {self.post.id}"
