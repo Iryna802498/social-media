@@ -280,3 +280,17 @@ class PostViewSet(viewsets.ModelViewSet):
         return Response(
             {"detail": "Successfully unliked this post."}
         )
+
+
+class LikeViewSet(viewsets.ModelViewSet):
+    queryset = Like.objects.select_related(
+        "user",
+        "post"
+    )
+    serializer_class = LikeSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return Like.objects.filter(
+            user=self.request.user
+        ).select_related("post")
