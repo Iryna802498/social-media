@@ -5,6 +5,7 @@ from .models import (
     Post,
     Like,
     Comment,
+    Follow
 )
 
 
@@ -181,3 +182,50 @@ class CommentDetailSerializer(CommentListSerializer):
             "comment",
             "publishing_at"
         )
+
+
+class FollowSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Follow
+        fields = (
+            "id",
+            "follower",
+            "following"
+        )
+
+
+class FollowerSerializer(FollowSerializer):
+    follower = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Follow
+        fields = (
+            "id",
+            "follower"
+        )
+
+    def get_follower(self, obj):
+        profile = obj.follower.profile
+        return ProfileDetailSerializer(
+            profile,
+            context=self.context
+        ).data
+
+
+class FollowingSerializer(FollowSerializer):
+    following = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Follow
+        fields = (
+            "id",
+            "following"
+        )
+
+    def get_following(self, obj):
+        profile = obj.following.profile
+        return ProfileDetailSerializer(
+            profile,
+            context=self.context
+        ).data
