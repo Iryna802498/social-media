@@ -147,3 +147,136 @@ class ProfileViewSet(viewsets.ModelViewSet):
             queryset, many=True
         )
         return Response(serializer.data)
+
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = (
+        Post.objects.select_related("user")
+        .prefetch_related("hashtag")
+        )
+    serializer_class = PostListSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_permissions(self):
+        if self.action in ["update", "partial_update", "destroy"]:
+            return [IsAuthenticated(), IsOwner()]
+        return [IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        return serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        hashtag = self.request.query_params.get(
+            "hashtag"
+        )
+        username = self.request.query_params.get(
+            "username"
+        )
+        queryset = self.queryset
+        if hashtag:
+            queryset = queryset.filter(
+                hashtag__text__icontains=hashtag
+            )
+        if username:
+            queryset = queryset.filter(
+                user__username__icontains=username
+            )
+        return queryset
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "hashtag",
+                type=OpenApiTypes.STR,
+                description=(
+                    "Filter by hashtag "
+                    "(ex. ?hashtag='travel')"),
+            ),
+            OpenApiParameter(
+                "username",
+                type=OpenApiTypes.STR,
+                description=(
+                    "Filter by username "
+                    "(ex. ?username='@test_user')"),
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return PostListSerializer
+        elif self.action == "add_comment":
+            return CommentListSerializer
+        elif self.action in ["like", "unlike"]:
+            return LikeSerializer
+        return PostDetailSerializer
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="add-comment",
+        permission_classes=[IsAuthenticated],
+        serializer_class=CommentListSerializer
+    )
+    def add_comment(self, request, pk=None):
+        """Endpoint to add comment for specific post"""
+        post = self.get_object()
+        serializer = CommentListSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user, post=post)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="like",
+        permission_classes=[IsAuthenticated]
+    )
+    def like(self, request, pk=None):
+        post = self.get_object()
+        like, created = Like.objects.get_or_create(
+            user=request.user,
+            post=post
+        )
+        serializer = LikeSerializer(like)
+        if created:
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(
+                {"detail": "Already liked."},
+                status=status.HTTP_200_OK
+            )
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="unlike",
+        permission_classes=[IsAuthenticated]
+    )
+    def unlike(self, request, pk=None):
+        post = self.get_object()
+        deleted, _ = Like.objects.filter(
+            user=request.user,
+            post=post
+        ).delete()
+        if deleted == 0:
+            return Response(
+                {"detail": "You did not like this post."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(
+            {"detail": "Successfully unliked this post."}
+        )
