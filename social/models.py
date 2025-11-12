@@ -1,6 +1,7 @@
 import os
 import uuid
 from django.db import models
+from django.core.exceptions import ValidationError
 from social_media import settings
 
 
@@ -107,3 +108,26 @@ class Comment(models.Model):
 
     def __str__(self) -> str:
         return f"Comment by {self.user.email} on {self.post.id}"
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="followings",
+        on_delete=models.CASCADE,
+    )
+    following = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="followers",
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        unique_together = ["follower", "following"]
+
+    def clean(self):
+        if self.follower == self.following:
+            raise ValidationError("You cannot follow yourself!")
+
+    def __str__(self) -> str:
+        return f"{self.follower.email} -> {self.following.email}"
