@@ -107,3 +107,36 @@ class LikeSerializer(serializers.ModelSerializer):
             "post",
             "created_at"
         )
+
+
+class PostDetailSerializer(PostListSerializer):
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="username"
+    )
+    likes = LikeSerializer(
+        many=True,
+        read_only=True
+    )
+    comments = serializers.SerializerMethodField()
+    hashtag = HashtagSerializer(
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "user",
+            "media",
+            "content",
+            "hashtag",
+            "publishing_at",
+            "likes",
+            "comments"
+        )
+
+    def get_comments(self, obj):
+        comments = obj.comments.all()
+        return CommentListSerializer(comments, many=True).data
