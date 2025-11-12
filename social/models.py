@@ -36,3 +36,36 @@ class Hashtag(models.Model):
 
     def __str__(self) -> str:
         return self.text
+
+
+def post_media_file_image_path(instance, filename):
+    _, extension = os.path.splitext(filename)
+    user_id = instance.user.id if hasattr(instance, "user") else instance.id
+    filename = f"user-id-{user_id}-post-{uuid.uuid4()}{extension}"
+    return os.path.join("uploads/posts/", filename)
+
+
+class Post(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="posts",
+        on_delete=models.CASCADE
+    )
+    media = models.ImageField(
+        upload_to=post_media_file_image_path,
+        blank=True,
+        null=True
+    )
+    content = models.TextField()
+    hashtag = models.ManyToManyField(
+        Hashtag,
+        related_name="posts",
+        blank=True
+    )
+    publishing_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"Post by {self.user.email}"
+
+    class Meta:
+        ordering = ["-publishing_at"]
