@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import (
     Profile,
+    Hashtag,
 )
 
 
@@ -49,3 +50,13 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 
     def get_following_count(self, obj):
         return obj.user.followings.count()
+
+
+class HashtagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Hashtag
+        fields = (
+            "id",
+            "text"
+        )
