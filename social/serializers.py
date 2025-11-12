@@ -4,6 +4,7 @@ from .models import (
     Hashtag,
     Post,
     Like,
+    Comment,
 )
 
 
@@ -140,3 +141,43 @@ class PostDetailSerializer(PostListSerializer):
     def get_comments(self, obj):
         comments = obj.comments.all()
         return CommentListSerializer(comments, many=True).data
+
+
+class CommentListSerializer(serializers.ModelSerializer):
+    post = serializers.PrimaryKeyRelatedField(
+        read_only=True
+    )
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="username"
+    )
+
+    class Meta:
+        model = Comment
+        fields = (
+            "id",
+            "post",
+            "user",
+            "comment",
+            "publishing_at"
+        )
+
+
+class CommentDetailSerializer(CommentListSerializer):
+    post = PostListSerializer(
+        read_only=True
+    )
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="username"
+    )
+
+    class Meta:
+        model = Comment
+        fields = (
+            "id",
+            "post",
+            "user",
+            "comment",
+            "publishing_at"
+        )
