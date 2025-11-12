@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import (
     Profile,
     Hashtag,
+    Post,
 )
 
 
@@ -60,3 +61,31 @@ class HashtagSerializer(serializers.ModelSerializer):
             "id",
             "text"
         )
+
+
+class PostListSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="username"
+    )
+    hashtag = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field="text"
+    )
+    likes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "user",
+            "media",
+            "content",
+            "hashtag",
+            "publishing_at",
+            "likes_count"
+        )
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
