@@ -294,3 +294,25 @@ class LikeViewSet(viewsets.ModelViewSet):
         return Like.objects.filter(
             user=self.request.user
         ).select_related("post")
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.select_related(
+        "post",
+        "user"
+    )
+    serializer_class = CommentListSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_permissions(self):
+        if self.action in ["update", "partial_update", "destroy"]:
+            return [IsAuthenticated(), IsOwner()]
+        return [IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return CommentListSerializer
+        return CommentDetailSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
