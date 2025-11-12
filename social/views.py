@@ -316,3 +316,12 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class FollowViewSet(viewsets.ModelViewSet):
+    queryset = Follow.objects.select_related(
+        "follower",
+        "following"
+    )
+    serializer_class = FollowSerializer
+    permission_classes = (IsAuthenticated,)
