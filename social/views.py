@@ -1,3 +1,4 @@
+from django.utils.dateparse import parse_datetime
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -24,6 +25,7 @@ from .serializers import (
     FollowerSerializer,
     FollowingSerializer
 )
+from .tasks import create_post
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -163,7 +165,15 @@ class PostViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
+        publishing_at = self.request.data.get("publishing_at")
+        if publishing_at:
+            publishing_at = parse_datetime(publishing_at)
+            data = serializer.validated_data
+            create_post.apply_async(
+                args=[self.request.user.id, data],
+                eta=publishing_at
+            )
+        serializer.save(user=self.request.user)
 
     def get_queryset(self):
         hashtag = self.request.query_params.get(
