@@ -63,7 +63,7 @@ class Post(models.Model):
         related_name="posts",
         blank=True
     )
-    publishing_at = models.DateTimeField(auto_now_add=True)
+    publishing_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self) -> str:
         return f"Post by {self.user.email}"
